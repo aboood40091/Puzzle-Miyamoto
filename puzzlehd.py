@@ -2595,26 +2595,22 @@ class MainWindow(QtWidgets.QMainWindow):
 
         if isDxt5:
             # Convert mipmaps to DDS
-            # Replace this with actual code, please!!
-            if not os.path.isdir("DDSConv"):
-                os.mkdir("DDSConv")
-            
+
             for i, tex in enumerate(mipmaps):
-                tex.save('DDSConv/mipmap%s_%d.png' % ('_nml' if normalmap else '', i))
-                process = Popen([os.environ['PROGRAMFILES'] + '\\Compressonator\\CompressonatorCLI.exe',
-                                 '-fd', 'BC3', '-nomipmap',
-                                 'DDSConv/mipmap%s_%d.png' % ('_nml' if normalmap else '', i),
-                                 'DDSConv/mipmap%s_%d.dds' % ('_nml' if normalmap else '', i)],
+                tex.save(self.miyamoto_path + '\Tools/mipmap%s_%d.png' % ('_nml' if normalmap else '', i))
+                process = Popen([self.miyamoto_path + '/Tools/nvcompress.exe',
+                                 '-bc3', '-nomips',
+                                 self.miyamoto_path + '/Tools/mipmap%s_%d.png' % ('_nml' if normalmap else '', i),
+                                 self.miyamoto_path + '/Tools/mipmap%s_%d.dds' % ('_nml' if normalmap else '', i)],
                                 stdout=PIPE, stderr=PIPE)
                 stdout, stderr = process.communicate()
 
             ddsmipmaps = []
             for i in range(numMips):
-                with open('DDSConv/mipmap%s_%d.dds' % ('_nml' if normalmap else '', i), 'rb') as f:
+                with open(self.miyamoto_path + '\Tools/mipmap%s_%d.dds' % ('_nml' if normalmap else '', i), 'rb') as f:
                     ddsmipmaps.append(f.read())
-
-            import shutil
-            shutil.rmtree("DDSConv")
+                os.remove(self.miyamoto_path + '/Tools/mipmap%s_%d.png' % ('_nml' if normalmap else '', i))
+                os.remove(self.miyamoto_path + '/Tools/mipmap%s_%d.dds' % ('_nml' if normalmap else '', i))
 
             # Grab the textures from the DDSs
             texmipmaps = []
