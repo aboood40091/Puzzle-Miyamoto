@@ -2601,7 +2601,7 @@ class MainWindow(QtWidgets.QMainWindow):
             
             for i, tex in enumerate(mipmaps):
                 tex.save('DDSConv/mipmap%s_%d.png' % ('_nml' if normalmap else '', i))
-                process = Popen(['C:\\Program Files\\Compressonator\\CompressonatorCLI.exe',
+                process = Popen([os.environ['PROGRAMFILES'] + '\\Compressonator\\CompressonatorCLI.exe',
                                  '-fd', 'BC3', '-nomipmap',
                                  'DDSConv/mipmap%s_%d.png' % ('_nml' if normalmap else '', i),
                                  'DDSConv/mipmap%s_%d.dds' % ('_nml' if normalmap else '', i)],
