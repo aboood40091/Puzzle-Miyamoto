@@ -1,4 +1,5 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 
 # Puzzle HD
 # This is Puzzle 0.6, ported to Python 3 & PyQt5, and then ported to support the New Super Mario Bros. U tileset format.
@@ -7,8 +8,8 @@
 import SARC
 import os
 import os.path
+import platform
 import struct
-from subprocess import Popen, PIPE
 import sys
 
 from ctypes import create_string_buffer
@@ -2093,11 +2094,10 @@ class MainWindow(QtWidgets.QMainWindow):
         for folder in arc.contents:
             if folder.name == 'BG_tex':
                 for file in folder.contents:
-                    if (file.name == '%s_nml.gtx' % self.name) and len(file.data) in (1421344, 4196384):
+                    if file.name.endswith('_nml.gtx'):
                         NmlMap = file.data
-                    elif (file.name == '%s.gtx' % self.name) and len(file.data) in (1421344, 4196384):
+                    elif file.name.endswith('.gtx') and len(file.data) in (1421344, 4196384):
                         Image = file.data
-                            
             elif folder.name == 'BG_chk':
                 for file in folder.contents:
                     if file.name.startswith('d_bgchk_') and file.name.endswith('.bin'):
@@ -2598,12 +2598,19 @@ class MainWindow(QtWidgets.QMainWindow):
 
             for i, tex in enumerate(mipmaps):
                 tex.save(self.miyamoto_path + '\Tools/mipmap%s_%d.png' % ('_nml' if normalmap else '', i))
-                process = Popen([self.miyamoto_path + '/Tools/nvcompress.exe',
-                                 '-bc3', '-nomips',
-                                 self.miyamoto_path + '/Tools/mipmap%s_%d.png' % ('_nml' if normalmap else '', i),
-                                 self.miyamoto_path + '/Tools/mipmap%s_%d.dds' % ('_nml' if normalmap else '', i)],
-                                stdout=PIPE, stderr=PIPE)
-                stdout, stderr = process.communicate()
+                text_file = open(self.miyamoto_path + '\Tools/RUN.bat', 'w')
+                text = 'nvcompress.exe -bc3 -nomips "'
+                text += self.miyamoto_path + '/Tools/mipmap%s_%d.png" ' % ('_nml' if normalmap else '', i)
+                text += self.miyamoto_path + '/Tools/mipmap%s_%d.dds"' % ('_nml' if normalmap else '', i)
+                text_file.write(text)
+                text_file.close()
+                os.chdir(self.miyamoto_path + '/Tools')
+                if platform.system() == 'Windows':
+                    os.system("RUN.bat")
+                else:
+                    os.system("wine cmd /c RUN.bat")
+                os.chdir(self.miyamoto_path)
+                os.remove(self.miyamoto_path + '\Tools/RUN.bat')
 
             ddsmipmaps = []
             for i in range(numMips):
@@ -2965,14 +2972,22 @@ class MainWindow(QtWidgets.QMainWindow):
         with open(self.miyamoto_path + '\Tools/texture.gtx', 'wb') as binfile:
             binfile.write(tiledata)
 
-        process = Popen([self.miyamoto_path + '/Tools/gtx_extract.exe', self.miyamoto_path + '/Tools/texture.gtx',
-                         self.miyamoto_path + '/Tools/texture.bmp'], stdout=PIPE, stderr=PIPE)
-        stdout, stderr = process.communicate()
+        text_file = open(self.miyamoto_path + '\Tools/RUN.bat', 'w')
+        text_file.write('gtx_extract.exe texture.gtx texture.bmp')
+        text_file.close()
+        os.chdir(self.miyamoto_path + '/Tools')
+        if platform.system() == 'Windows':
+            os.system("RUN.bat")
+        else:
+            os.system("wine cmd /c RUN.bat")
+        os.chdir(self.miyamoto_path)
+        os.remove(self.miyamoto_path + '\Tools/RUN.bat')
 
         img = QtGui.QImage(self.miyamoto_path + '/Tools/texture.bmp')
 
         os.remove(self.miyamoto_path + '\Tools/texture.gtx')
         os.remove(self.miyamoto_path + '\Tools/texture.bmp')
+        
 
         return img
 
