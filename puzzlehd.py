@@ -8,7 +8,6 @@
 import SARC
 import os
 import os.path
-import platform
 import struct
 import sys
 
@@ -22,6 +21,8 @@ try:
     HaveNSMBLib = True
 except ImportError:
     HaveNSMBLib = False
+
+import gtx_extract as gtx
 
 
 ########################################################
@@ -2094,10 +2095,11 @@ class MainWindow(QtWidgets.QMainWindow):
         for folder in arc.contents:
             if folder.name == 'BG_tex':
                 for file in folder.contents:
-                    if file.name.endswith('_nml.gtx'):
+                    if file.name.endswith('_nml.gtx') and len(file.data) in (1421344, 4196384):
                         NmlMap = file.data
                     elif file.name.endswith('.gtx') and len(file.data) in (1421344, 4196384):
                         Image = file.data
+                            
             elif folder.name == 'BG_chk':
                 for file in folder.contents:
                     if file.name.startswith('d_bgchk_') and file.name.endswith('.bin'):
@@ -2466,10 +2468,21 @@ class MainWindow(QtWidgets.QMainWindow):
     def saveTileset(self):
         outdata = self.saving(os.path.basename(self.name))
 
-        with open(self.miyamoto_path + '\Tools/tmp.tmp', 'wb') as f:
+        with open(self.miyamoto_path + '/Tools/tmp.tmp', 'wb') as f:
             f.write(outdata)
 
         self.close()
+
+
+    def saveTilesetAs(self):
+
+        fn = QtWidgets.QFileDialog.getSaveFileName(self, 'Choose a new filename', '', 'All files (*)')[0]
+        if fn == '': return
+
+        outdata = self.saving(os.path.basename(str(fn)))
+        
+        with open(fn, 'wb') as f:
+            f.write(outdata)
 
 
     def saving(self, name):
@@ -2597,24 +2610,15 @@ class MainWindow(QtWidgets.QMainWindow):
             # Convert mipmaps to DDS
 
             for i, tex in enumerate(mipmaps):
-                tex.save(self.miyamoto_path + '\Tools/mipmap%s_%d.png' % ('_nml' if normalmap else '', i))
-                text_file = open(self.miyamoto_path + '\Tools/RUN.bat', 'w')
-                text = 'nvcompress.exe -bc3 -nomips "'
-                text += self.miyamoto_path + '/Tools/mipmap%s_%d.png" ' % ('_nml' if normalmap else '', i)
-                text += self.miyamoto_path + '/Tools/mipmap%s_%d.dds"' % ('_nml' if normalmap else '', i)
-                text_file.write(text)
-                text_file.close()
+                tex.save(self.miyamoto_path + '/Tools/mipmap%s_%d.png' % ('_nml' if normalmap else '', i))
                 os.chdir(self.miyamoto_path + '/Tools')
-                if platform.system() == 'Windows':
-                    os.system("RUN.bat")
-                else:
-                    os.system("wine cmd /c RUN.bat")
+                os.system('nvcompress.exe -bc3 -nomips mipmap%s_%d.png ' % ('_nml' if normalmap else '', i)
+                          + 'mipmap%s_%d.dds' % ('_nml' if normalmap else '', i))
                 os.chdir(self.miyamoto_path)
-                os.remove(self.miyamoto_path + '\Tools/RUN.bat')
 
             ddsmipmaps = []
             for i in range(numMips):
-                with open(self.miyamoto_path + '\Tools/mipmap%s_%d.dds' % ('_nml' if normalmap else '', i), 'rb') as f:
+                with open(self.miyamoto_path + '/Tools/mipmap%s_%d.dds' % ('_nml' if normalmap else '', i), 'rb') as f:
                     ddsmipmaps.append(f.read())
                 os.remove(self.miyamoto_path + '/Tools/mipmap%s_%d.png' % ('_nml' if normalmap else '', i))
                 os.remove(self.miyamoto_path + '/Tools/mipmap%s_%d.dds' % ('_nml' if normalmap else '', i))
@@ -2812,6 +2816,7 @@ class MainWindow(QtWidgets.QMainWindow):
         icon = QtGui.QIcon(pixmap)
 
         fileMenu.addAction("Import Tileset from file...", self.openTilesetfromFile, QtGui.QKeySequence.Open)
+        fileMenu.addAction("Export Tileset...", self.saveTilesetAs, QtGui.QKeySequence.SaveAs)
         fileMenu.addAction("Import Image...", self.openImage, QtGui.QKeySequence('Ctrl+I'))
         fileMenu.addAction("Export Image...", self.saveImage, QtGui.QKeySequence('Ctrl+E'))
         fileMenu.addAction("Import Normal Map...", self.openNml, QtGui.QKeySequence('Ctrl+Shift+I'))
@@ -2969,25 +2974,42 @@ class MainWindow(QtWidgets.QMainWindow):
 
 
     def LoadTexture_NSMBU(self, tiledata):
-        with open(self.miyamoto_path + '\Tools/texture.gtx', 'wb') as binfile:
+        tile_path = self.miyamoto_path + '/Tools'
+
+        with open(tile_path + '/texture.gtx', 'wb') as binfile:
             binfile.write(tiledata)
 
-        text_file = open(self.miyamoto_path + '\Tools/RUN.bat', 'w')
-        text_file.write('gtx_extract.exe texture.gtx texture.bmp')
-        text_file.close()
-        os.chdir(self.miyamoto_path + '/Tools')
-        if platform.system() == 'Windows':
-            os.system("RUN.bat")
-        else:
-            os.system("wine cmd /c RUN.bat")
-        os.chdir(self.miyamoto_path)
-        os.remove(self.miyamoto_path + '\Tools/RUN.bat')
+        data = gtx.readGFD(tiledata) # Read GTX
 
-        img = QtGui.QImage(self.miyamoto_path + '/Tools/texture.bmp')
+        if data.format == 0x1A: # for RGBA8, use gtx_extract
+            os.chdir(self.miyamoto_path + '/Tools')
+            os.system('gtx_extract.exe texture.gtx texture.bmp')
+            os.chdir(self.miyamoto_path)
 
-        os.remove(self.miyamoto_path + '\Tools/texture.gtx')
-        os.remove(self.miyamoto_path + '\Tools/texture.bmp')
-        
+            # Return as a QImage
+            img = QtGui.QImage(tile_path + '/texture.bmp')
+            os.remove(tile_path + '/texture.bmp')
+
+        elif data.format == 0x33: # for DXT5, use Abood's GTX Extractor
+            # Convert to DDS
+            hdr, data2 = gtx.get_deswizzled_data(data)
+            with open(tile_path + '/texture2.dds', 'wb+') as output:
+                output.write(hdr)
+                output.write(data2)
+
+            # Decompress DXT5
+            os.chdir(self.miyamoto_path + '/Tools')
+            os.system('nvcompress.exe -rgb -nomips -alpha  texture2.dds texture.dds')
+            os.chdir(self.miyamoto_path)
+            os.remove(tile_path + '/texture2.dds')
+
+            # Read DDS, return as a QImage
+            with open(tile_path + '/texture.dds', 'rb') as img:
+                imgdata = img.read()[0x80:0x80+(data.dataSize*4)]
+            img = QtGui.QImage(imgdata, data.width, data.height, QtGui.QImage.Format_ARGB32)
+            os.remove(tile_path + '/texture.dds')
+
+        os.remove(tile_path + '/texture.gtx')
 
         return img
 
