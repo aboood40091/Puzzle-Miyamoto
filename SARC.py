@@ -1,24 +1,27 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
+#!/usr/bin/python
+# -*- coding: latin-1 -*-
 
-# Miyamoto! Level Editor - New Super Mario Bros. U Level Editor
-# Copyright (C) 2009-2017 Treeki, Tempus, angelsl, JasonP27, Kinnay,
-# MalStar1000, RoadrunnerWMC, MrRean, Grop, AboodXD, Gota7
+# Reggie! - New Super Mario Bros. Wii Level Editor
+# Version Next Milestone 2 Alpha 4
+# Copyright (C) 2009-2014 Treeki, Tempus, angelsl, JasonP27, Kamek64,
+# MalStar1000, RoadrunnerWMC
 
-# This file is part of Miyamoto!.
+# This file is part of Reggie!.
 
-# Miyamoto! is free software: you can redistribute it and/or modify
+# Reggie! is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 
-# Miyamoto! is distributed in the hope that it will be useful,
+# Reggie! is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 
 # You should have received a copy of the GNU General Public License
-# along with Miyamoto!.  If not, see <http://www.gnu.org/licenses/>.
+# along with Reggie!.  If not, see <http://www.gnu.org/licenses/>.
+
+
 
 # SARC.py
 # A library for opening and saving the Nintendo SARC archive format
@@ -209,7 +212,7 @@ class SARC_Archive(FileArchive):
 
         self.endianness = '>'
         # If you change this default value, be prepared
-        # to make some changes to miyamoto.py, because the
+        # to make some changes to reggie.py, because the
         # NSMB2 file-saving code assumes that a brand-new
         # SARC_Archive will be little-endian!
 
@@ -575,3 +578,4 @@ class SARC_Archive(FileArchive):
 
         # Return the data
         return fileData
+
