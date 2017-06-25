@@ -1,2 +1,2 @@
-# PuzzleHD-Miyamoto
-Source code for PuzzleHD that is used by Miyamoto
+# Puzzle-Miyamoto
+Source code for Puzzle NSMBU that is used by Miyamoto.
