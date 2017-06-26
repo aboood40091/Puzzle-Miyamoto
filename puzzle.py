@@ -2519,7 +2519,14 @@ class MainWindow(QtWidgets.QMainWindow):
     def saveTileset(self):
         outdata = self.saving(os.path.basename(self.name))
 
-        with open(self.miyamoto_path + '/Tools/tmp.tmp', 'wb') as f:
+        if platform.system() == 'Windows':
+            filename = self.miyamoto_path + '/Tools/tmp.tmp'
+        elif platform.system() == 'Linux':
+            filename = self.miyamoto_path + '/linuxTools/tmp.tmp'
+        elif platform.system() == 'Darwin':
+            filename = self.miyamoto_path + '/macTools/tmp.tmp'
+
+        with open(filename, 'wb') as f:
             f.write(outdata)
 
         self.close()
@@ -2675,7 +2682,7 @@ class MainWindow(QtWidgets.QMainWindow):
                               + 'mipmap%s_%d.dds' % ('_nml' if normalmap else '', i))
                 elif platform.system() == 'Linux':
                     os.system('chmod +x ' + self.miyamoto_path + '/linuxTools/nvcompress.elf')
-                    os.system('nvcompress.elf -bc3 -nomips mipmap%s_%d.png ' % ('_nml' if normalmap else '', i)
+                    os.system(self.miyamoto_path + '/linuxTools/nvcompress.elf -bc3 -nomips mipmap%s_%d.png ' % ('_nml' if normalmap else '', i)
                               + 'mipmap%s_%d.dds' % ('_nml' if normalmap else '', i))
                 elif platform.system() == 'Darwin':
                     os.system('chmod +x ' + self.miyamoto_path + '/macTools/nvcompress-osx.app')
