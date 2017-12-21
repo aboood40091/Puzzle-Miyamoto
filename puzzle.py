@@ -36,6 +36,7 @@ import SARC
 
 
 Tileset = None
+PuzzleVersion = '2.5'
 
 miyamoto_path = ''
 
@@ -699,8 +700,8 @@ class displayWidget(QtWidgets.QListView):
     def __init__(self, parent=None):
         super(displayWidget, self).__init__(parent)
 
-        self.setMinimumWidth(424)
-        self.setMaximumWidth(424)
+        self.setMinimumWidth(426)
+        self.setMaximumWidth(426)
         self.setMinimumHeight(404)
         self.setDragEnabled(True)
         self.setViewMode(QtWidgets.QListView.IconMode)
@@ -2000,7 +2001,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.tileImage = QtGui.QPixmap()
         self.normalmap = False
 
-        global Tileset
+        global Tileset, PuzzleVersion
         Tileset = TilesetClass()
 
         self.name = name
@@ -2012,6 +2013,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         if data == 'None':
             self.newTileset()
+
         else:
             with open(data, 'rb') as fn:
                 self.data = fn.read()
@@ -2019,7 +2021,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.setSizePolicy(QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Fixed,
                 QtWidgets.QSizePolicy.Fixed))
-        self.setWindowTitle(name)
+        self.setWindowTitle(name + ' - Puzzle NSMBU v%s' % PuzzleVersion)
 
 
     def setuptile(self):
@@ -2636,19 +2638,22 @@ class MainWindow(QtWidgets.QMainWindow):
             os.remove(tile_path + '/tmp.png')
 
         else:  # Save as RGBA8
-            import dds
-
             data = tex.bits()
             data.setsize(tex.byteCount())
             data = data.asstring()
 
+            import dds
+
             with open(tile_path + '/tmp.dds', 'wb+') as out:
-                hdr = dds.generateRGBA8Header(2048, 512)
+                hdr = dds.generateHeader(2048, 512, 0x1a)
                 out.write(hdr)
                 out.write(data)
 
+            del dds
+
         import gtx
         gtxdata = gtx.DDStoGTX(tile_path + '/tmp.dds')
+        del gtx
 
         os.remove(tile_path + '/tmp.dds')
 
@@ -3547,6 +3552,10 @@ class MainWindow(QtWidgets.QMainWindow):
             curTile.byte3 = palette.parameters2.currentIndex()
 
         curTile.byte4 = palette.collsType.currentIndex()
+
+        if curTile.byte4 in [4, 5]:
+            curTile.byte4 += 0x1D
+
         curTile.byte5 = palette.terrainType.currentIndex()
         curTile.byte6 = 0
         curTile.byte7 = 0
