@@ -2609,10 +2609,10 @@ class MainWindow(QtWidgets.QMainWindow):
         # use nvcompress to compress as BC3 on Windows and Linux
         if platform.system() in ['Windows', 'Linux']:
             if platform.system() == 'Windows':
-                tile_path = curr_path + '/Tools'
+                tile_path = self.miyamoto_path + '/Tools'
 
             elif platform.system() == 'Linux':
-                tile_path = curr_path + '/linuxTools'
+                tile_path = self.miyamoto_path + '/linuxTools'
 
             if Tileset.slot != 0:  # Save as DXT5/BC3
                 tex.save(tile_path + '/tmp.png')
@@ -2628,7 +2628,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
                 os.system(exe + ' -bc3 tmp.png tmp.dds')
             
-                os.chdir(curr_path)
+                os.chdir(self.miyamoto_path)
 
                 os.remove(tile_path + '/tmp.png')
 
@@ -2649,7 +2649,7 @@ class MainWindow(QtWidgets.QMainWindow):
         # nvcompress doesn't want to work on MacOSX
         # so let's use a local BC3 compressor (lossy)
         elif platform.system() == 'Darwin':
-            tile_path = curr_path + '/macTools'
+            tile_path = self.miyamoto_path + '/macTools'
 
             import dds
 
